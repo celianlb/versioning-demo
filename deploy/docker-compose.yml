@@ -1,0 +1,14 @@
+services:
+  backend:
+    image: ghcr.io/OWNER/versioning-demo-back:latest
+    env_file:
+      - /opt/versioning-demo/env/backend.env
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+
+  frontend:
+    image: ghcr.io/OWNER/versioning-demo-front:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
