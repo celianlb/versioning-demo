@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/celianlb/versioning-demo/compare/v1.1.1...v1.2.0) (2025-11-07)
+
+
+### Features
+
+* **front:** add demo banner ([46685fe](https://github.com/celianlb/versioning-demo/commit/46685feda8477daf8d399d3518c27fe69fdc071f))
+
 ## [1.1.1](https://github.com/celianlb/versioning-demo/compare/v1.1.0...v1.1.1) (2025-11-07)
 
 
