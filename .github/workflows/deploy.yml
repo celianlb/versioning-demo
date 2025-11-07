@@ -1,8 +1,9 @@
 name: Deploy (pnpm)
 
 on:
-  release:
-    types: [published]
+  workflow_run:
+    workflows: ["Release (pnpm)"]
+    types: [completed]
 
 env:
   REGISTRY: ghcr.io
@@ -11,43 +12,49 @@ env:
   VERSION: ${{ github.event.release.tag_name }}
 
 jobs:
+  jobs:
   build-and-push:
     runs-on: ubuntu-latest
     environment: production
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     permissions:
       contents: read
       packages: write
-    steps:
-      - uses: actions/checkout@v4
-      - name: Login GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GHCR_TOKEN }}
-
-      - name: Build & push backend (pnpm)
-        uses: docker/build-push-action@v6
-        with:
-          context: ./back
-          push: true
-          tags: |
-            ${{ env.IMAGE_BACK }}:latest
-            ${{ env.IMAGE_BACK }}:${{ env.VERSION }}
-
-      - name: Build & push frontend (pnpm)
-        uses: docker/build-push-action@v6
-        with:
-          context: ./front
-          push: true
-          tags: |
-            ${{ env.IMAGE_FRONT }}:latest
-            ${{ env.IMAGE_FRONT }}:${{ env.VERSION }}
+      steps:
+        - uses: actions/checkout@v4
+          with: { fetch-depth: 0 }
+        - name: Get latest tag
+          id: tag
+          run: |
+            TAG=$(git describe --tags --abbrev=0)
+            echo "tag=$TAG" >> $GITHUB_OUTPUT
+        - name: Login GHCR
+          uses: docker/login-action@v3
+          with:
+            registry: ghcr.io
+            username: ${{ github.repository_owner }}
+            password: ${{ secrets.GHCR_TOKEN }}
+        - name: Build & push backend (pnpm)
+          uses: docker/build-push-action@v6
+          with:
+            context: ./back
+            push: true
+            tags: |
+              ghcr.io/${{ github.repository_owner }}/versioning-demo-back:latest
+              ghcr.io/${{ github.repository_owner }}/versioning-demo-back:${{ steps.tag.outputs.tag }}
+        - name: Build & push frontend (pnpm)
+          uses: docker/build-push-action@v6
+          with:
+            context: ./front
+            push: true
+            tags: |
+              ghcr.io/${{ github.repository_owner }}/versioning-demo-front:latest
+              ghcr.io/${{ github.repository_owner }}/versioning-demo-front:${{ steps.tag.outputs.tag }}
 
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    environment: production # <= idem ici
+    environment: production
     steps:
       - name: Copy docker-compose to VPS
         uses: appleboy/scp-action@v0.1.7
