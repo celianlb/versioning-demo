@@ -2,54 +2,62 @@ name: Deploy (pnpm)
 
 on:
   workflow_run:
-    workflows: ["Release (pnpm)"]
+    workflows: ["Release (pnpm)"] # doit matcher le name: de release.yml
     types: [completed]
+  workflow_dispatch: {} # déclenchement manuel utile pour tester
 
 env:
   REGISTRY: ghcr.io
   IMAGE_FRONT: ghcr.io/${{ github.repository_owner }}/versioning-demo-front
   IMAGE_BACK: ghcr.io/${{ github.repository_owner }}/versioning-demo-back
-  VERSION: ${{ github.event.release.tag_name }}
 
 jobs:
-  jobs:
   build-and-push:
     runs-on: ubuntu-latest
     environment: production
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     permissions:
       contents: read
       packages: write
-      steps:
-        - uses: actions/checkout@v4
-          with: { fetch-depth: 0 }
-        - name: Get latest tag
-          id: tag
-          run: |
-            TAG=$(git describe --tags --abbrev=0)
-            echo "tag=$TAG" >> $GITHUB_OUTPUT
-        - name: Login GHCR
-          uses: docker/login-action@v3
-          with:
-            registry: ghcr.io
-            username: ${{ github.repository_owner }}
-            password: ${{ secrets.GHCR_TOKEN }}
-        - name: Build & push backend (pnpm)
-          uses: docker/build-push-action@v6
-          with:
-            context: ./back
-            push: true
-            tags: |
-              ghcr.io/${{ github.repository_owner }}/versioning-demo-back:latest
-              ghcr.io/${{ github.repository_owner }}/versioning-demo-back:${{ steps.tag.outputs.tag }}
-        - name: Build & push frontend (pnpm)
-          uses: docker/build-push-action@v6
-          with:
-            context: ./front
-            push: true
-            tags: |
-              ghcr.io/${{ github.repository_owner }}/versioning-demo-front:latest
-              ghcr.io/${{ github.repository_owner }}/versioning-demo-front:${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Get latest tag from git
+        id: tag
+        run: |
+          TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+          if [ -z "$TAG" ]; then
+            echo "No tag found, fallback to 0.0.0"
+            TAG=0.0.0
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Using tag: $TAG"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Build & push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./back
+          push: true
+          tags: |
+            ${{ env.IMAGE_BACK }}:latest
+            ${{ env.IMAGE_BACK }}:${{ steps.tag.outputs.tag }}
+
+      - name: Build & push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./front
+          push: true
+          tags: |
+            ${{ env.IMAGE_FRONT }}:latest
+            ${{ env.IMAGE_FRONT }}:${{ steps.tag.outputs.tag }}
 
   deploy:
     needs: build-and-push
@@ -65,14 +73,14 @@ jobs:
           source: "deploy/docker-compose.yml"
           target: "/opt/versioning-demo"
 
-      - name: SSH deploy
+      - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            mkdir -p /opt/versioning-demo/env
             docker login ghcr.io -u ${{ github.repository_owner }} -p ${{ secrets.GHCR_TOKEN }}
             docker compose -f /opt/versioning-demo/docker-compose.yml pull
             docker compose -f /opt/versioning-demo/docker-compose.yml up -d --remove-orphans
+            docker compose -f /opt/versioning-demo/docker-compose.yml ps
