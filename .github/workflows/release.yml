@@ -1,4 +1,5 @@
 name: Release (pnpm)
+
 on:
   push:
     branches: [main]
@@ -6,27 +7,38 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
-    # ajoute cette ligne si besoin pour que @semantic-release/git puisse pousser le changelog
     permissions:
-      contents: write
+      contents: write # semantic-release met à jour le changelog/tags
     steps:
       - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
 
+      # 1) Installer Node 22 (sans cache intégré pnpm ici)
       - uses: actions/setup-node@v4
         with:
-          node-version: "22.14.0" # <— avant: 20
-          cache: "pnpm"
+          node-version: "22.14.0"
 
+      # 2) Activer pnpm via Corepack (AVANT le cache)
       - name: Enable pnpm via Corepack
         run: |
           corepack enable
           corepack prepare pnpm@9.12.0 --activate
+          pnpm --version
 
-      # Si tu as les devDependencies au root, préfère installer plutôt que add à chaque run :
+      # 3) Cache du store pnpm (rapide et fiable)
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      # 4) Installer les devDeps du root pour semantic-release
       - run: pnpm install --ignore-scripts
 
-      # Puis lance semantic-release
+      # 5) Lancer semantic-release
       - run: pnpm exec semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
