@@ -8,13 +8,13 @@ jobs:
   release:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # semantic-release met à jour le changelog/tags
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # 1) Installer Node 22 (sans cache intégré pnpm ici)
+      # 1) Installer Node
       - uses: actions/setup-node@v4
         with:
           node-version: "22.14.0"

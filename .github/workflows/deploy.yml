@@ -2,9 +2,9 @@ name: Deploy (pnpm)
 
 on:
   workflow_run:
-    workflows: ["Release (pnpm)"] # doit matcher le name: de release.yml
+    workflows: ["Release (pnpm)"]
     types: [completed]
-  workflow_dispatch: {} # déclenchement manuel utile pour tester
+  workflow_dispatch: {}
 
 env:
   REGISTRY: ghcr.io
@@ -80,7 +80,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "deploy/docker-compose.yml" # <- chemin relatif au repo
+          source: "deploy/docker-compose.yml"
           target: "/opt/versioning-demo"
           overwrite: true
       - name: Deploy over SSH
@@ -90,6 +90,14 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
+            set -e
+            mkdir -p /opt/versioning-demo
+            # si le fichier a été copié sous /opt/versioning-demo/deploy/, on le remonte
+            if [ -f /opt/versioning-demo/deploy/docker-compose.yml ]; then
+              mv -f /opt/versioning-demo/deploy/docker-compose.yml /opt/versioning-demo/docker-compose.yml
+            fi
+            test -f /opt/versioning-demo/docker-compose.yml || { echo "❌ compose introuvable"; exit 1; }
+
             docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
             docker compose -f /opt/versioning-demo/docker-compose.yml pull
             docker compose -f /opt/versioning-demo/docker-compose.yml up -d --remove-orphans
