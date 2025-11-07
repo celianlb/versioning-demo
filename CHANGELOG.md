@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/celianlb/versioning-demo/compare/v1.0.0...v1.1.0) (2025-11-07)
+
+
+### Features
+
+* initial production deploy ([4e2404c](https://github.com/celianlb/versioning-demo/commit/4e2404cf4dfd40752c4498a0daf07e3b8c81e483))
+
 # 1.0.0 (2025-11-07)
 
 
