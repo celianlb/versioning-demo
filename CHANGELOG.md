@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/celianlb/versioning-demo/compare/v2.0.0...v2.1.0) (2025-11-07)
+
+
+### Features
+
+* **front:** proxy /api to backend via Nginx ([75f4960](https://github.com/celianlb/versioning-demo/commit/75f49602704f03de5ccce95d38472ddd79c7ac72))
+
 # [2.0.0](https://github.com/celianlb/versioning-demo/compare/v1.2.0...v2.0.0) (2025-11-07)
 
 
