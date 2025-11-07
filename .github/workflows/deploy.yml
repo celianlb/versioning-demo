@@ -64,15 +64,25 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Debug workspace
+        run: |
+          pwd
+          ls -la
+          ls -la deploy || true
+          test -f deploy/docker-compose.yml && echo "compose found ✅" || (echo "compose missing ❌"; exit 1)
       - name: Copy docker-compose to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "deploy/docker-compose.yml"
+          source: "deploy/docker-compose.yml" # <- chemin relatif au repo
           target: "/opt/versioning-demo"
-
+          overwrite: true
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -80,7 +90,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            docker login ghcr.io -u ${{ github.repository_owner }} -p ${{ secrets.GHCR_TOKEN }}
+            docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
             docker compose -f /opt/versioning-demo/docker-compose.yml pull
             docker compose -f /opt/versioning-demo/docker-compose.yml up -d --remove-orphans
             docker compose -f /opt/versioning-demo/docker-compose.yml ps
