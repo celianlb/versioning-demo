@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/celianlb/versioning-demo/compare/v1.1.0...v1.1.1) (2025-11-07)
+
+
+### Bug Fixes
+
+* **back:** Dockerfile copies dist from builder and builds TS ([be973bd](https://github.com/celianlb/versioning-demo/commit/be973bd84586035f0294424f140d7e76039adcf5))
+
 # [1.1.0](https://github.com/celianlb/versioning-demo/compare/v1.0.0...v1.1.0) (2025-11-07)
 
 
