@@ -1,3 +1,10 @@
+## [2.1.1](https://github.com/celianlb/versioning-demo/compare/v2.1.0...v2.1.1) (2025-11-07)
+
+
+### Bug Fixes
+
+* **front:** name builder stage + Nginx proxy /api ([91ff4f7](https://github.com/celianlb/versioning-demo/commit/91ff4f7b6683bf7b6de3e3d3181b76a28cd6f8b0))
+
 # [2.1.0](https://github.com/celianlb/versioning-demo/compare/v2.0.0...v2.1.0) (2025-11-07)
 
 
