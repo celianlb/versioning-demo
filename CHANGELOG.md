@@ -1,3 +1,15 @@
+# [2.0.0](https://github.com/celianlb/versioning-demo/compare/v1.2.0...v2.0.0) (2025-11-07)
+
+
+### Features
+
+* **auth:** change password hashing algorithm ([148f35d](https://github.com/celianlb/versioning-demo/commit/148f35d4f61deab26baeb9e9aa038c8f1bf5b61a))
+
+
+### BREAKING CHANGES
+
+* **auth:** Passwords created before v2.0.0 are no longer compatible
+
 # [1.2.0](https://github.com/celianlb/versioning-demo/compare/v1.1.1...v1.2.0) (2025-11-07)
 
 
