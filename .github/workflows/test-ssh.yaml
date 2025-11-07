@@ -6,11 +6,23 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - name: SSH check hostname
+      - name: Write SSH private key from secret (keep newlines)
+        shell: bash
+        run: |
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > key.pem
+          sed -i 's/\r$//' key.pem
+          chmod 600 key.pem
+          head -n1 key.pem | sed 's/.*/First line OK (masked)/'
+          tail -n1 key.pem | sed 's/.*/Last line OK (masked)/'
+          grep -q "BEGIN OPENSSH PRIVATE KEY" key.pem || (echo "❌ Mauvais format de clé"; exit 1)
+
+      - name: SSH check
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          key_path: key.pem
           script: |
-            hostname && uptime && docker --version
+            echo "Connected to $(hostname)"
+            whoami
+            uptime
